@@ -26,14 +26,14 @@ public class AnysoundPlaybackLog : EditorWindow
 
     private void OnEnable()
     {
-        AnysoundRuntime.OnPlayEvent += OnPlay;
-        AnysoundRuntime.OnStopEvent += OnStop;
+        BlipRuntime.OnPlayEvent += OnPlay;
+        BlipRuntime.OnStopEvent += OnStop;
     }
 
     private void OnDisable()
     {
-        AnysoundRuntime.OnPlayEvent -= OnPlay;
-        AnysoundRuntime.OnStopEvent -= OnStop;
+        BlipRuntime.OnPlayEvent -= OnPlay;
+        BlipRuntime.OnStopEvent -= OnStop;
     }
 
     private void CreateGUI()
@@ -117,17 +117,17 @@ public class AnysoundPlaybackLog : EditorWindow
         }
     }
 
-    private void OnPlay(Anysound sound, GameObject parent)
+    private void OnPlay(Blip sound, GameObject parent)
     {
         AddEntry("Play", sound, parent, new Color(0.4f, 1f, 0.4f));
     }
 
-    private void OnStop(Anysound sound, GameObject parent)
+    private void OnStop(Blip sound, GameObject parent)
     {
         AddEntry("Stop", sound, parent, new Color(1f, 0.4f, 0.4f));
     }
 
-    private void AddEntry(string eventType, Anysound sound, GameObject parent, Color color)
+    private void AddEntry(string eventType, Blip sound, GameObject parent, Color color)
     {
         _logEntries.Insert(0, new LogEntry
         {

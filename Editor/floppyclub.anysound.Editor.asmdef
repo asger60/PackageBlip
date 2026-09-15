@@ -1,7 +1,7 @@
 {
-    "name": "floppyclub.anysound.Editor",
+    "name": "floppyclub.blip.Editor",
     "rootNamespace": "",
-    "references": ["floppyclub.anysound"],
+    "references": ["floppyclub.blip"],
     "includePlatforms": [
         "Editor"
     ],

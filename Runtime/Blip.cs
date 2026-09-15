@@ -3,7 +3,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(fileName = "Anysound", menuName = "Anysound/Anysound", order = 1)]
-public class Anysound : ScriptableObject
+public class Blip : ScriptableObject
 {
     [SerializeField] private AudioClip[] audioClips;
     public AudioClip[] AudioClips { get => audioClips; set => audioClips = value; }
@@ -166,7 +166,7 @@ public class Anysound : ScriptableObject
                 case SoundPositionMode.SoundPositionType.WorldSpace:
                     return 0;
                 case SoundPositionMode.SoundPositionType.ScreenSpace:
-                    return AnysoundRuntime.GetSound2DPan(gameObject);
+                    return BlipRuntime.GetSound2DPan(gameObject);
                 case SoundPositionMode.SoundPositionType.None:
                     return 0;
                 default:
@@ -222,23 +222,23 @@ public class Anysound : ScriptableObject
     public FadeSettings GetStopSettings() => stopSettings;
     public FadeSettings GetPlaySettings() => playSettings;
 
-    public Anysound()
+    public Blip()
     {
         volume.value = 1;
         pitch.value = 1;
         soundPositionMode = new SoundPositionMode(SoundPositionMode.SoundPositionType.None, 100);
         audioClips = new AudioClip[1];
-        audioClips[0] = AnysoundRuntime.DebugClip;
+        audioClips[0] = BlipRuntime.DebugClip;
         pitch.Init(1);
         volume.Init(0.8f);
         playSettings.fadeDuration = 0.2f;
         stopSettings.fadeDuration = 0.2f;
     }
 
-    public static void Play(Anysound sound, GameObject parentObject) => AnysoundRuntime.Play(sound, parentObject);
-    public static void Stop(Anysound sound, GameObject parentObject) => AnysoundRuntime.Stop(sound, parentObject);
+    public static void Play(Blip sound, GameObject parentObject) => BlipRuntime.Play(sound, parentObject);
+    public static void Stop(Blip sound, GameObject parentObject) => BlipRuntime.Stop(sound, parentObject);
 
-    public void Play(GameObject parentObject = null) => AnysoundRuntime.Play(this, parentObject);
-    public void Stop(GameObject parentObject = null) => AnysoundRuntime.Stop(this, parentObject);
-    public void SetParameter(GameObject parentObject, float value) => AnysoundRuntime.SetParameter(this, parentObject, value);
+    public void Play(GameObject parentObject = null) => BlipRuntime.Play(this, parentObject);
+    public void Stop(GameObject parentObject = null) => BlipRuntime.Stop(this, parentObject);
+    public void SetParameter(GameObject parentObject, float value) => BlipRuntime.SetParameter(this, parentObject, value);
 }

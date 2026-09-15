@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-[CustomPropertyDrawer(typeof(Anysound.ControlSource))]
+[CustomPropertyDrawer(typeof(Blip.ControlSource))]
 public class ControlSourceDrawer : PropertyDrawer
 {
     private PropertyField _durationField;

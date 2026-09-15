@@ -1,17 +1,17 @@
 using System;
 using UnityEngine;
 
-public class AnysoundObjectTracker
+public class BlipObjectTracker
 {
     private GameObject _parent;
     private AudioSource _source;
-    private Anysound _anysound;
+    private Blip _blip;
 
     private bool _isFree;
     public bool IsFree => _isFree;
     public AudioSource Source => _source;
     public GameObject Parent => _parent;
-    public Anysound Anysound => _anysound;
+    public Blip Blip => _blip;
 
     private bool _isFadingVolume;
 
@@ -39,7 +39,7 @@ public class AnysoundObjectTracker
     private Fade _fade;
     private float _parameter = 1;
 
-    public AnysoundObjectTracker(AudioSource source)
+    public BlipObjectTracker(AudioSource source)
     {
         _source = source;
         _source.spatialBlend = 1;
@@ -67,35 +67,35 @@ public class AnysoundObjectTracker
 
         if (_timer >= 0)
         {
-            _timer += AnysoundRuntime.DeltaTime;
+            _timer += BlipRuntime.DeltaTime;
         }
 
         if (_timer > _schedulePlayDelay)
         {
             _timer = -1;
             _source.Play();
-            if (_anysound.GetPlaySettings().useFade)
+            if (_blip.GetPlaySettings().useFade)
             {
                 _source.volume = _fade.initialValue;
-                _fade = new Fade(0, _anysound.GetVolume(_parameter), _anysound.GetPlaySettings().fadeDuration);
+                _fade = new Fade(0, _blip.GetVolume(_parameter), _blip.GetPlaySettings().fadeDuration);
                 _isFadingVolume = true;
             }
         }
 
 
-        if (_anysound.Is2D)
+        if (_blip.Is2D)
         {
-            _source.panStereo = AnysoundRuntime.GetSound2DPan(_parent);
+            _source.panStereo = BlipRuntime.GetSound2DPan(_parent);
         }
 
-        if (_anysound.ExternalPitchControl || _anysound.ExternalVolumeControl)
+        if (_blip.ExternalPitchControl || _blip.ExternalVolumeControl)
         {
             HandleVolumeAndPitch();
         }
 
         if (_isFadingVolume)
         {
-            _fade.timer += AnysoundRuntime.DeltaTime;
+            _fade.timer += BlipRuntime.DeltaTime;
             _source.volume = Mathf.Lerp(_fade.initialValue, _fade.targetValue, _fade.timer / _fade.duration);
 
             if (_fade.timer > _fade.duration)
@@ -115,9 +115,9 @@ public class AnysoundObjectTracker
         }
     }
 
-    public void Play(Anysound sound, GameObject parentObject)
+    public void Play(Blip sound, GameObject parentObject)
     {
-        _anysound = sound;
+        _blip = sound;
         _parent = parentObject;
         _isFree = false;
         _source.clip = sound.GetAudioClip();
@@ -157,7 +157,7 @@ public class AnysoundObjectTracker
 
     void DoStop()
     {
-        _anysound = null;
+        _blip = null;
         _parent = null;
         _source.Stop();
         _isFree = true;
@@ -168,13 +168,13 @@ public class AnysoundObjectTracker
     public void Stop(Action onStopped = null)
     {
         _onStopped = onStopped;
-        if (!_anysound.GetStopSettings().useFade)
+        if (!_blip.GetStopSettings().useFade)
         {
             DoStop();
         }
         else
         {
-            _fade = new Fade(_source.volume, 0, _anysound.GetStopSettings().fadeDuration);
+            _fade = new Fade(_source.volume, 0, _blip.GetStopSettings().fadeDuration);
             _isFadingVolume = true;
         }
     }
@@ -187,10 +187,10 @@ public class AnysoundObjectTracker
 
     void HandleVolumeAndPitch()
     {
-        if (_anysound.ExternalPitchControl)
-            _source.pitch = Mathf.Max(_anysound.GetPitch(_parameter), 0.1f);
+        if (_blip.ExternalPitchControl)
+            _source.pitch = Mathf.Max(_blip.GetPitch(_parameter), 0.1f);
 
-        if (_anysound.ExternalVolumeControl)
-            _source.volume = Mathf.Pow(_anysound.GetVolume(_parameter), 2);
+        if (_blip.ExternalVolumeControl)
+            _source.volume = Mathf.Pow(_blip.GetVolume(_parameter), 2);
     }
 }

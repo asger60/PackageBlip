@@ -37,7 +37,7 @@ public class AnysoundUtils
 
     private static void CreateSingleAnysound(AudioClip[] audioClips)
     {
-        var anysound = ScriptableObject.CreateInstance<Anysound>();
+        var anysound = ScriptableObject.CreateInstance<Blip>();
         anysound.AudioClips = audioClips;
 
         string path = AssetDatabase.GetAssetPath(audioClips[0]);
@@ -57,7 +57,7 @@ public class AnysoundUtils
         Object lastAnysound = null;
         foreach (var clip in audioClips)
         {
-            var anysound = ScriptableObject.CreateInstance<Anysound>();
+            var anysound = ScriptableObject.CreateInstance<Blip>();
             anysound.AudioClips = new[] { clip };
 
             string path = AssetDatabase.GetAssetPath(clip);

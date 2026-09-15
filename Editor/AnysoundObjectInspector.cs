@@ -2,11 +2,11 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-[CustomEditor(typeof(Anysound))]
+[CustomEditor(typeof(Blip))]
 public class AnysoundObjectInspector : Editor
 {
     private Button _previewButton;
-    private Anysound _anysound;
+    private Blip _blip;
     private VisualElement _extendedInspector;
     private Slider _parameterSlider;
 
@@ -17,7 +17,7 @@ public class AnysoundObjectInspector : Editor
         VisualElement root = new VisualElement();
         var foldOut = new Foldout
         {
-            value = AnysoundRuntime.ShowExtendedSettings,
+            value = BlipRuntime.ShowExtendedSettings,
             text = "Settings"
         };
         root.Add(foldOut);
@@ -29,10 +29,10 @@ public class AnysoundObjectInspector : Editor
 
         foldOut.RegisterValueChangedCallback(e =>
         {
-            AnysoundRuntime.ShowExtendedSettings = foldOut.value;
+            BlipRuntime.ShowExtendedSettings = foldOut.value;
             _extendedInspector.style.display = new StyleEnum<DisplayStyle>(foldOut.value ? DisplayStyle.Flex : DisplayStyle.None);
         });
-        _anysound = target as Anysound;
+        _blip = target as Blip;
 
 
         var spacer = new VisualElement();
@@ -44,7 +44,7 @@ public class AnysoundObjectInspector : Editor
             showInputField = true,
         };
         RefreshParameterActive();
-        _parameterSlider.RegisterValueChangedCallback(evt => { AnysoundRuntime.SetPreviewParameter(evt.newValue); });
+        _parameterSlider.RegisterValueChangedCallback(evt => { BlipRuntime.SetPreviewParameter(evt.newValue); });
 
 
         root.TrackSerializedObjectValue(serializedObject, property =>
@@ -57,22 +57,22 @@ public class AnysoundObjectInspector : Editor
 
         _previewButton = new Button(() =>
         {
-            if (_anysound.GetLooping())
+            if (_blip.GetLooping())
             {
-                if (AnysoundRuntime.IsPreviewing(_anysound))
+                if (BlipRuntime.IsPreviewing(_blip))
                 {
-                    AnysoundRuntime.StopPreview(_anysound, () => { SetPreviewButtonText("Preview"); });
+                    BlipRuntime.StopPreview(_blip, () => { SetPreviewButtonText("Preview"); });
                     SetPreviewButtonText("Stopping");
                 }
                 else
                 {
-                    AnysoundRuntime.StartPreview(_anysound);
+                    BlipRuntime.StartPreview(_blip);
                     SetPreviewButtonText("Stop");
                 }
             }
             else
             {
-                AnysoundRuntime.StartPreview(_anysound);
+                BlipRuntime.StartPreview(_blip);
                 SetPreviewButtonText("Preview");
             }
         });
@@ -85,7 +85,7 @@ public class AnysoundObjectInspector : Editor
 
     void RefreshParameterActive()
     {
-        _parameterSlider.style.display = _anysound.ExternalPitchControl || _anysound.ExternalVolumeControl
+        _parameterSlider.style.display = _blip.ExternalPitchControl || _blip.ExternalVolumeControl
             ? new StyleEnum<DisplayStyle>(DisplayStyle.Flex)
             : new StyleEnum<DisplayStyle>(DisplayStyle.None);
     }

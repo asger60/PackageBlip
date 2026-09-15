@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor;
 using UnityEngine;
 
-[CustomPropertyDrawer(typeof(Anysound))]
+[CustomPropertyDrawer(typeof(Blip))]
 public class AnysoundObjectDrawer : PropertyDrawer
 {
     private string _previewButtonText = "Preview"; // Initialize with default text
@@ -54,25 +54,25 @@ public class AnysoundObjectDrawer : PropertyDrawer
         {
             if (GUI.Button(buttonRect, _previewButtonText))
             {
-                Anysound target = (Anysound)property.objectReferenceValue; // Cast the object reference
+                Blip target = (Blip)property.objectReferenceValue; // Cast the object reference
                 if (target != null) // Add null check for safety
                 {
                     if (target.GetLooping())
                     {
-                        if (AnysoundRuntime.IsPreviewing(target))
+                        if (BlipRuntime.IsPreviewing(target))
                         {
-                            AnysoundRuntime.StopPreview(target, () => { SetPreviewButtonText("Preview"); });
+                            BlipRuntime.StopPreview(target, () => { SetPreviewButtonText("Preview"); });
                             SetPreviewButtonText("Stopping");
                         }
                         else
                         {
-                            AnysoundRuntime.StartPreview(target);
+                            BlipRuntime.StartPreview(target);
                             SetPreviewButtonText("Stop");
                         }
                     }
                     else
                     {
-                        AnysoundRuntime.StartPreview(target);
+                        BlipRuntime.StartPreview(target);
                         SetPreviewButtonText("Preview");
                     }
                 }
@@ -85,14 +85,14 @@ public class AnysoundObjectDrawer : PropertyDrawer
     // Adapt CreateNew to take SerializedProperty as an argument
     void CreateNew(SerializedProperty property)
     {
-        AnysoundRuntime.Init();
-        Anysound newSound = ScriptableObject.CreateInstance<Anysound>();
+        BlipRuntime.Init();
+        Blip newSound = ScriptableObject.CreateInstance<Blip>();
         // Generate a unique asset path for the new ScriptableObject
         var uniqueFileName = AssetDatabase.GenerateUniqueAssetPath("Assets/" + property.displayName + ".asset");
 
         AssetDatabase.CreateAsset(newSound, uniqueFileName);
         // Load the asset back to ensure it's properly recognized by Unity
-        var assetInProject = AssetDatabase.LoadAssetAtPath<Anysound>(AssetDatabase.GetAssetPath(newSound));
+        var assetInProject = AssetDatabase.LoadAssetAtPath<Blip>(AssetDatabase.GetAssetPath(newSound));
         Debug.Log($"Created new Anysound asset: {assetInProject.name}", assetInProject);
         property.objectReferenceValue = assetInProject;
         // Apply modified properties to ensure the change is saved to the SerializedObject

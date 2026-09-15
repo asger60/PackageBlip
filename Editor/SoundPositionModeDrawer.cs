@@ -3,7 +3,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-[CustomPropertyDrawer(typeof(Anysound.SoundPositionMode))]
+[CustomPropertyDrawer(typeof(Blip.SoundPositionMode))]
 public class SoundPositionModeDrawer : PropertyDrawer
 {
     private PropertyField _durationField;

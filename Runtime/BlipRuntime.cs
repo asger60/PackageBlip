@@ -6,22 +6,24 @@ using UnityEditor;
 #endif
 
 [ExecuteInEditMode]
-public class AnysoundRuntime : MonoBehaviour
+public class BlipRuntime : MonoBehaviour
 {
-    private static AnysoundRuntime _instance;
+    private static BlipRuntime _instance;
 
-    private static AnysoundRuntime Instance
+    private static BlipRuntime Instance
     {
         get
         {
             if (!_instance)
             {
-                _instance = FindAnyObjectByType<AnysoundRuntime>();
+                _instance = FindAnyObjectByType<BlipRuntime>();
             }
 
             if (!_instance)
             {
-                _instance = new GameObject("AnysoundRuntime").AddComponent<AnysoundRuntime>();
+                //_instance = new GameObject("AnysoundRuntime").AddComponent<AnysoundRuntime>();
+                Debug.LogWarning("No Blip found.");
+                return null;
             }
 
 
@@ -30,7 +32,7 @@ public class AnysoundRuntime : MonoBehaviour
     }
 
     private AudioSource[] _sources;
-    private List<AnysoundObjectTracker> _trackers = new List<AnysoundObjectTracker>();
+    private List<BlipObjectTracker> _trackers = new();
     [Range(1, 200)] [SerializeField] private int voices = 100;
     private Camera _camera;
     private bool _isInit;
@@ -60,7 +62,7 @@ public class AnysoundRuntime : MonoBehaviour
         Init();
     }
 
-    public static void Init() => Instance.DoInit();
+    public static void Init() => Instance?.DoInit();
 
     void DoInit()
     {
@@ -72,16 +74,16 @@ public class AnysoundRuntime : MonoBehaviour
         }
 
         _camera = Camera.main;
-        _trackers = new List<AnysoundObjectTracker>(voices);
+        _trackers = new List<BlipObjectTracker>(voices);
         for (int i = 0; i < voices; i++)
         {
             var sourceObject = new GameObject("AnysoundSource");
             var source = sourceObject.AddComponent<AudioSource>();
             sourceObject.transform.SetParent(transform);
-            _trackers.Add(new AnysoundObjectTracker(source));
+            _trackers.Add(new BlipObjectTracker(source));
         }
 #if UNITY_EDITOR
-        DebugClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Packages/com.floppyclub.anysound/Runtime/Resources/DebugPling.wav");
+        DebugClip = AssetDatabase.LoadAssetAtPath<AudioClip>("Packages/com.floppyclub.blip/Runtime/Resources/DebugPling.wav");
 #endif
         _isInit = true;
     }
@@ -92,13 +94,13 @@ public class AnysoundRuntime : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    static AnysoundRuntime()
+    static BlipRuntime()
     {
         EditorApplication.update += EditorUpdate;
     }
 
-    public static Action<Anysound, GameObject> OnPlayEvent;
-    public static Action<Anysound, GameObject> OnStopEvent;
+    public static Action<Blip, GameObject> OnPlayEvent;
+    public static Action<Blip, GameObject> OnStopEvent;
 
     static void EditorUpdate()
     {
@@ -110,13 +112,13 @@ public class AnysoundRuntime : MonoBehaviour
     }
 #endif
 
-    public static void StartPreview(Anysound sound)
+    public static void StartPreview(Blip sound)
     {
         if (!Instance._isInit) Init();
         Instance.GetFreeTracker()?.Play(sound, Instance.gameObject);
     }
 
-    public static void StopPreview(Anysound sound, Action onStopped = null)
+    public static void StopPreview(Blip sound, Action onStopped = null)
     {
         if (!Instance._isInit) Init();
         foreach (var tracker in Instance.GetTrackers(sound, Instance.gameObject))
@@ -125,13 +127,13 @@ public class AnysoundRuntime : MonoBehaviour
         }
     }
 
-    public static void Play(Anysound sound, GameObject gameObject) => Instance?.DoPlay(sound, gameObject);
+    public static void Play(Blip sound, GameObject gameObject) => Instance?.DoPlay(sound, gameObject);
 
 
-    public static void Stop(Anysound sound, GameObject gameObject) => Instance?.DoStop(sound, gameObject);
+    public static void Stop(Blip sound, GameObject gameObject) => Instance?.DoStop(sound, gameObject);
 
 
-    public static void SetParameter(Anysound sound, GameObject parentObject, float value) => Instance?.DoSetParameter(sound, parentObject, value);
+    public static void SetParameter(Blip sound, GameObject parentObject, float value) => Instance?.DoSetParameter(sound, parentObject, value);
 
 
     public static void SetPreviewParameter(float value)
@@ -142,7 +144,7 @@ public class AnysoundRuntime : MonoBehaviour
         }
     }
 
-    void DoSetParameter(Anysound sound, GameObject parentObject, float value)
+    void DoSetParameter(Blip sound, GameObject parentObject, float value)
     {
         var trackers = GetTrackers(sound, parentObject);
         foreach (var tracker in trackers)
@@ -152,14 +154,14 @@ public class AnysoundRuntime : MonoBehaviour
     }
 
 
-    public static bool IsPreviewing(Anysound sound)
+    public static bool IsPreviewing(Blip sound)
     {
         if (!Instance._isInit) Init();
         return Instance.GetTrackers(sound, Instance.gameObject).Length > 0;
     }
 
 
-    void DoPlay(Anysound sound, GameObject parentObject)
+    void DoPlay(Blip sound, GameObject parentObject)
     {
         Init();
         if (!parentObject)
@@ -182,7 +184,7 @@ public class AnysoundRuntime : MonoBehaviour
 #endif
     }
 
-    void DoStop(Anysound sound, GameObject parentObject)
+    void DoStop(Blip sound, GameObject parentObject)
     {
         if (!_isInit) Init();
         if (!parentObject)
@@ -206,7 +208,7 @@ public class AnysoundRuntime : MonoBehaviour
 #endif
     }
 
-    AnysoundObjectTracker GetFreeTracker()
+    BlipObjectTracker GetFreeTracker()
     {
         foreach (var tracker in _trackers)
         {
@@ -214,7 +216,7 @@ public class AnysoundRuntime : MonoBehaviour
         }
 
         float bestPercent = 0;
-        AnysoundObjectTracker furthestTracker = null;
+        BlipObjectTracker furthestTracker = null;
         foreach (var tracker in _trackers)
         {
             var thisPercent = tracker.GetPlaybackPercent();
@@ -229,9 +231,9 @@ public class AnysoundRuntime : MonoBehaviour
     }
 
 
-    AnysoundObjectTracker[] GetTrackers(GameObject parentObject)
+    BlipObjectTracker[] GetTrackers(GameObject parentObject)
     {
-        List<AnysoundObjectTracker> trackers = new List<AnysoundObjectTracker>();
+        List<BlipObjectTracker> trackers = new List<BlipObjectTracker>();
         foreach (var tracker in _trackers)
         {
             if (tracker.Parent == parentObject) trackers.Add(tracker);
@@ -240,12 +242,12 @@ public class AnysoundRuntime : MonoBehaviour
         return trackers.ToArray();
     }
 
-    AnysoundObjectTracker[] GetTrackers(Anysound sound, GameObject parentObject)
+    BlipObjectTracker[] GetTrackers(Blip sound, GameObject parentObject)
     {
-        List<AnysoundObjectTracker> trackers = new List<AnysoundObjectTracker>();
+        List<BlipObjectTracker> trackers = new List<BlipObjectTracker>();
         foreach (var tracker in _trackers)
         {
-            if (tracker.Anysound == sound && tracker.Parent == parentObject) trackers.Add(tracker);
+            if (tracker.Blip == sound && tracker.Parent == parentObject) trackers.Add(tracker);
         }
 
         return trackers.ToArray();
@@ -266,10 +268,15 @@ public class AnysoundRuntime : MonoBehaviour
 
     public static float GetSound2DPan(GameObject gameObject)
     {
-        if (Instance._camera == null) Instance._camera = Camera.main;
-        var pos = Instance._camera.WorldToViewportPoint(gameObject.transform.position);
-        pos.x -= 0.5f;
-        pos.x *= 2;
-        return pos.x;
+        if (!Instance._camera) Instance._camera = Camera.main;
+        if (Instance._camera)
+        {
+            var pos = Instance._camera.WorldToViewportPoint(gameObject.transform.position);
+            pos.x -= 0.5f;
+            pos.x *= 2;
+            return pos.x;
+        }
+
+        return 0;
     }
 }

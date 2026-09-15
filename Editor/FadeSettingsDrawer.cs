@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 
-[CustomPropertyDrawer(typeof(Anysound.FadeSettings))]
+[CustomPropertyDrawer(typeof(Blip.FadeSettings))]
 public class FadeSettingsDrawer : PropertyDrawer
 {
     private PropertyField _durationField;
