@@ -1,20 +1,28 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(fileName = "Anysound", menuName = "Anysound/Anysound", order = 1)]
 public class Blip : ScriptableObject
 {
     [SerializeField] private AudioClip[] audioClips;
-    public AudioClip[] AudioClips { get => audioClips; set => audioClips = value; }
 
-    enum ClipSelectMode
+    public AudioClip[] AudioClips
+    {
+        get => audioClips;
+        set => audioClips = value;
+    }
+
+    public enum ClipSelectMode
     {
         Random,
-        Sequential
+        Sequential,
+        All
     }
 
     [SerializeField] private ClipSelectMode clipSelectMode;
+    public ClipSelectMode GetClipSelectMode() => clipSelectMode;
 
     private enum PlayMode
     {
@@ -131,16 +139,16 @@ public class Blip : ScriptableObject
     private int _currentPlayIndex;
 
 
-    [SerializeField] FadeSettings playSettings;
-    [SerializeField] FadeSettings stopSettings;
-    [Range(0, 5f)] [SerializeField] private float delay = 0;
-    public float Delay => delay;
+    [SerializeField] ActivationSettings playSettings;
+    [SerializeField] ActivationSettings stopSettings;
+
 
     [Serializable]
-    public struct FadeSettings
+    public struct ActivationSettings
     {
+        [Range(0, 5f)] public float delay;
         public bool useFade;
-        public float fadeDuration;
+        [Range(0, 5f)] public float fadeDuration;
     }
 
     public struct SoundPositionSettings
@@ -180,6 +188,8 @@ public class Blip : ScriptableObject
 
     public bool Is2D => soundPositionMode.soundPositionType == SoundPositionMode.SoundPositionType.ScreenSpace;
 
+    public SoundPositionMode.SoundPositionType PositionType => soundPositionMode.soundPositionType;
+
     public float GetPitch(float externalValue)
     {
         return pitch.GetValue(externalValue);
@@ -204,6 +214,9 @@ public class Blip : ScriptableObject
                 _currentPlayIndex++;
                 return audioClips[(int)Mathf.Repeat(_currentPlayIndex, audioClips.Length)];
 
+            case ClipSelectMode.All:
+                return audioClips[0];
+            
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -219,8 +232,8 @@ public class Blip : ScriptableObject
         return new SoundPositionSettings(soundPositionMode);
     }
 
-    public FadeSettings GetStopSettings() => stopSettings;
-    public FadeSettings GetPlaySettings() => playSettings;
+    public ActivationSettings GetStopSettings() => stopSettings;
+    public ActivationSettings GetPlaySettings() => playSettings;
 
     public Blip()
     {

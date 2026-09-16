@@ -16,8 +16,10 @@ public class BlipObjectTracker
     private bool _isFadingVolume;
 
     private Action _onStopped;
-    private float _timer;
+    private float _startTimer = -1;
+    private float _stopTimer = -1;
     private float _schedulePlayDelay;
+    private float _scheduleStopDelay;
 
 
     struct Fade
@@ -46,7 +48,8 @@ public class BlipObjectTracker
         _source.spread = 10;
         _source.dopplerLevel = 0;
         _isFree = true;
-        _timer = -1;
+        _startTimer = -1;
+        _stopTimer = -1;
     }
 
     public void Update()
@@ -59,25 +62,44 @@ public class BlipObjectTracker
             return;
         }
 
-        if (!_source.isPlaying && _timer < 0)
+        if (!_source.isPlaying && _startTimer < 0)
         {
             _isFree = true;
             return;
         }
 
-        if (_timer >= 0)
+        if (_startTimer >= 0)
         {
-            _timer += BlipRuntime.DeltaTime;
+            _startTimer += BlipRuntime.DeltaTime;
         }
 
-        if (_timer > _schedulePlayDelay)
+        if (_startTimer > _schedulePlayDelay)
         {
-            _timer = -1;
+            _startTimer = -1;
             _source.Play();
             if (_blip.GetPlaySettings().useFade)
             {
                 _source.volume = _fade.initialValue;
                 _fade = new Fade(0, _blip.GetVolume(_parameter), _blip.GetPlaySettings().fadeDuration);
+                _isFadingVolume = true;
+            }
+        }
+
+        if (_stopTimer >= 0)
+        {
+            _stopTimer += BlipRuntime.DeltaTime;
+        }
+
+        if (_stopTimer > _scheduleStopDelay)
+        {
+            _stopTimer = -1;
+            if (!_blip.GetStopSettings().useFade)
+            {
+                DoStop();
+            }
+            else
+            {
+                _fade = new Fade(_source.volume, 0, _blip.GetStopSettings().fadeDuration);
                 _isFadingVolume = true;
             }
         }
@@ -115,12 +137,12 @@ public class BlipObjectTracker
         }
     }
 
-    public void Play(Blip sound, GameObject parentObject)
+    public void Play(Blip sound, GameObject parentObject, AudioClip specificCLip = null)
     {
         _blip = sound;
         _parent = parentObject;
         _isFree = false;
-        _source.clip = sound.GetAudioClip();
+        _source.clip = specificCLip ?? sound.GetAudioClip();
         float volume = sound.GetVolume(_parameter);
 
         _source.volume = volume;
@@ -132,16 +154,10 @@ public class BlipObjectTracker
         _source.minDistance = positionSettings.MinDistance;
         _source.maxDistance = positionSettings.MaxDistance;
         _source.panStereo = positionSettings.GetPan(parentObject);
-        _timer = 0;
-        _schedulePlayDelay = sound.Delay;
-        //if (sound.Delay > 0)
-        //{
-        //    _source.PlayDelayed(sound.Delay);
-        //}
-        //else
-        //{
-        //    _source.Play();
-        //}
+        _startTimer = 0;
+        _schedulePlayDelay = sound.GetPlaySettings().delay;
+        if (sound.GetPlaySettings().useFade)
+            _source.volume = 0;
     }
 
     public float GetPlaybackPercent()
@@ -162,21 +178,14 @@ public class BlipObjectTracker
         _source.Stop();
         _isFree = true;
         _onStopped?.Invoke();
-        _timer = -1;
+        _startTimer = -1;
     }
 
     public void Stop(Action onStopped = null)
     {
         _onStopped = onStopped;
-        if (!_blip.GetStopSettings().useFade)
-        {
-            DoStop();
-        }
-        else
-        {
-            _fade = new Fade(_source.volume, 0, _blip.GetStopSettings().fadeDuration);
-            _isFadingVolume = true;
-        }
+        _stopTimer = 0;
+        _scheduleStopDelay = _blip.GetStopSettings().delay;
     }
 
     public void SetParameter(float value)

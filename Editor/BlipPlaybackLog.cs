@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class AnysoundPlaybackLog : EditorWindow
+public class BlipPlaybackLog : EditorWindow
 {
     private class LogEntry
     {
@@ -18,10 +18,10 @@ public class AnysoundPlaybackLog : EditorWindow
     private List<LogEntry> _logEntries = new List<LogEntry>();
     private MultiColumnListView _listView;
 
-    [MenuItem("Window/Anysound/Playback Log")]
+    [MenuItem("FloppyClub/Blip/Playback Log")]
     public static void ShowWindow()
     {
-        GetWindow<AnysoundPlaybackLog>("Anysound Playback Log");
+        GetWindow<BlipPlaybackLog>("Blip Playback Log");
     }
 
     private void OnEnable()

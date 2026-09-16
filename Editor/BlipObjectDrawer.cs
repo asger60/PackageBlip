@@ -1,11 +1,16 @@
 using UnityEditor;
-using UnityEditor;
 using UnityEngine;
 
 [CustomPropertyDrawer(typeof(Blip))]
-public class AnysoundObjectDrawer : PropertyDrawer
+public class BlipObjectDrawer : PropertyDrawer
 {
-    private string _previewButtonText = "Preview"; // Initialize with default text
+    private const string PlayIconPath = "Packages/com.floppyclub.blip/Editor/PNG/IconPlay.png";
+    private const string StopIconPath = "Packages/com.floppyclub.blip/Editor/PNG/IconStop.png";
+    private const string StoppingIconPath = "Packages/com.floppyclub.blip/Editor/PNG/IconStopping.png";
+
+    private string _previewState = "Preview"; // Initialize with default state
+
+    private const float PreviewIconScale = .75f;
 
     public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
     {
@@ -16,7 +21,7 @@ public class AnysoundObjectDrawer : PropertyDrawer
         // Get the rect for the content after drawing the label
         Rect contentRect = EditorGUI.PrefixLabel(position, label);
 
-        float buttonWidth = 80;
+        float buttonWidth = 20;
         float spacing = 5;
 
         // Use objectReferenceValue for checking if an object is assigned to the property
@@ -52,28 +57,42 @@ public class AnysoundObjectDrawer : PropertyDrawer
         }
         else if (showPreviewButton)
         {
-            if (GUI.Button(buttonRect, _previewButtonText))
+            bool clicked = GUI.Button(buttonRect, GUIContent.none, GUIStyle.none);
+
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(GetPreviewIconPath());
+            if (icon)
+            {
+                float iconSize = buttonRect.height * PreviewIconScale;
+                Rect iconRect = new Rect(
+                    buttonRect.center.x - iconSize / 2f,
+                    buttonRect.center.y - iconSize / 2f,
+                    iconSize,
+                    iconSize);
+                GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
+            }
+
+            if (clicked)
             {
                 Blip target = (Blip)property.objectReferenceValue; // Cast the object reference
-                if (target != null) // Add null check for safety
+                if (target) // Add null check for safety
                 {
                     if (target.GetLooping())
                     {
                         if (BlipRuntime.IsPreviewing(target))
                         {
-                            BlipRuntime.StopPreview(target, () => { SetPreviewButtonText("Preview"); });
-                            SetPreviewButtonText("Stopping");
+                            BlipRuntime.Stop(target, BlipRuntime.GetPreviewGameObject(), () => { SetPreviewState("Preview"); });
+                            SetPreviewState("Stopping");
                         }
                         else
                         {
-                            BlipRuntime.StartPreview(target);
-                            SetPreviewButtonText("Stop");
+                            BlipRuntime.Play(target, BlipRuntime.GetPreviewGameObject());
+                            SetPreviewState("Stop");
                         }
                     }
                     else
                     {
-                        BlipRuntime.StartPreview(target);
-                        SetPreviewButtonText("Preview");
+                        BlipRuntime.Play(target, BlipRuntime.GetPreviewGameObject());
+                        SetPreviewState("Preview");
                     }
                 }
             }
@@ -93,16 +112,26 @@ public class AnysoundObjectDrawer : PropertyDrawer
         AssetDatabase.CreateAsset(newSound, uniqueFileName);
         // Load the asset back to ensure it's properly recognized by Unity
         var assetInProject = AssetDatabase.LoadAssetAtPath<Blip>(AssetDatabase.GetAssetPath(newSound));
-        Debug.Log($"Created new Anysound asset: {assetInProject.name}", assetInProject);
+        Debug.Log($"Created new Blip asset: {assetInProject.name}", assetInProject);
         property.objectReferenceValue = assetInProject;
         // Apply modified properties to ensure the change is saved to the SerializedObject
         property.serializedObject.ApplyModifiedProperties();
     }
 
-    // Method to update the text of the preview button
-    void SetPreviewButtonText(string text)
+    // Method to update the state (and therefore icon) of the preview button
+    void SetPreviewState(string state)
     {
-        _previewButtonText = text;
+        _previewState = state;
+    }
+
+    string GetPreviewIconPath()
+    {
+        return _previewState switch
+        {
+            "Preview" => PlayIconPath,
+            "Stopping" => StoppingIconPath,
+            _ => StopIconPath
+        };
     }
 
     // Override GetPropertyHeight to ensure the drawer takes up a single line height

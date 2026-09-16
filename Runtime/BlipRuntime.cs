@@ -22,7 +22,7 @@ public class BlipRuntime : MonoBehaviour
             if (!_instance)
             {
                 //_instance = new GameObject("AnysoundRuntime").AddComponent<AnysoundRuntime>();
-                Debug.LogWarning("No Blip found.");
+                //Debug.LogWarning("No Blip found.");
                 return null;
             }
 
@@ -112,25 +112,29 @@ public class BlipRuntime : MonoBehaviour
     }
 #endif
 
-    public static void StartPreview(Blip sound)
-    {
-        if (!Instance._isInit) Init();
-        Instance.GetFreeTracker()?.Play(sound, Instance.gameObject);
-    }
+    public static GameObject GetPreviewGameObject() => Instance?.gameObject;
 
-    public static void StopPreview(Blip sound, Action onStopped = null)
+    public static void Play(Blip sound, GameObject gameObject)
     {
-        if (!Instance._isInit) Init();
-        foreach (var tracker in Instance.GetTrackers(sound, Instance.gameObject))
+        if (!Instance)
         {
-            tracker.Stop(onStopped);
+            Debug.LogWarning("No BlipRuntime found.");
+            return;
         }
+
+        Instance?.DoPlay(sound, gameObject);
     }
 
-    public static void Play(Blip sound, GameObject gameObject) => Instance?.DoPlay(sound, gameObject);
 
-
-    public static void Stop(Blip sound, GameObject gameObject) => Instance?.DoStop(sound, gameObject);
+    public static void Stop(Blip sound, GameObject gameObject, Action onDone = null)
+    {
+        if (!Instance)
+        {
+            Debug.LogWarning("No BlipRuntime found.");
+            return;
+        }
+        Instance?.DoStop(sound, gameObject, onDone);
+    }
 
 
     public static void SetParameter(Blip sound, GameObject parentObject, float value) => Instance?.DoSetParameter(sound, parentObject, value);
@@ -156,6 +160,11 @@ public class BlipRuntime : MonoBehaviour
 
     public static bool IsPreviewing(Blip sound)
     {
+        if(!Instance)
+        {
+            
+            return false;
+        }
         if (!Instance._isInit) Init();
         return Instance.GetTrackers(sound, Instance.gameObject).Length > 0;
     }
@@ -178,13 +187,24 @@ public class BlipRuntime : MonoBehaviour
 
         if (!_isInit) Init();
 
-        GetFreeTracker()?.Play(sound, parentObject);
+        if (sound.GetClipSelectMode() == Blip.ClipSelectMode.All)
+        {
+            foreach (var clip in sound.AudioClips)
+            {
+                GetFreeTracker()?.Play(sound, parentObject, clip);
+            }
+        }
+        else
+        {
+            GetFreeTracker()?.Play(sound, parentObject);
+        }
+
 #if UNITY_EDITOR
         OnPlayEvent?.Invoke(sound, parentObject);
 #endif
     }
 
-    void DoStop(Blip sound, GameObject parentObject)
+    void DoStop(Blip sound, GameObject parentObject, Action onDone = null)
     {
         if (!_isInit) Init();
         if (!parentObject)
@@ -201,7 +221,7 @@ public class BlipRuntime : MonoBehaviour
 
         foreach (var tracker in GetTrackers(sound, parentObject))
         {
-            tracker.Stop();
+            tracker.Stop(onDone);
         }
 #if UNITY_EDITOR
         OnStopEvent?.Invoke(sound, parentObject);

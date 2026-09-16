@@ -1,11 +1,13 @@
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
-[CustomPropertyDrawer(typeof(Blip.FadeSettings))]
+[CustomPropertyDrawer(typeof(Blip.ActivationSettings))]
 public class FadeSettingsDrawer : PropertyDrawer
 {
-    private PropertyField _durationField;
+    private PropertyField _fadeDurationField;
+    private PropertyField _delayField;
 
     public override VisualElement CreatePropertyGUI(SerializedProperty property)
     {
@@ -13,12 +15,20 @@ public class FadeSettingsDrawer : PropertyDrawer
         var label = new Label(property.displayName);
         label.style.marginTop = 8;
         label.style.marginLeft = 3;
+        label.style.unityFont = new StyleFont(EditorStyles.boldFont);
+        label.style.unityFontStyleAndWeight = FontStyle.Bold;
+
+
         container.Add(label);
+        container.Add(new PropertyField(property.FindPropertyRelative("delay")));
+
+        _fadeDurationField = new PropertyField(property.FindPropertyRelative("fadeDuration"));
         PropertyField boolField = new PropertyField(property.FindPropertyRelative("useFade"));
         container.Add(boolField);
 
-        _durationField = new PropertyField(property.FindPropertyRelative("fadeDuration"));
-        container.Add(_durationField);
+
+        container.Add(_fadeDurationField);
+
         boolField.RegisterValueChangeCallback(evt => { SetDurationVisible(evt.changedProperty.boolValue); });
 
         SetDurationVisible((property.FindPropertyRelative("useFade").boolValue));
@@ -28,6 +38,6 @@ public class FadeSettingsDrawer : PropertyDrawer
 
     void SetDurationVisible(bool state)
     {
-        _durationField.style.display = new StyleEnum<DisplayStyle>(state ? DisplayStyle.Flex : DisplayStyle.None);
+        _fadeDurationField.style.display = new StyleEnum<DisplayStyle>(state ? DisplayStyle.Flex : DisplayStyle.None);
     }
 }

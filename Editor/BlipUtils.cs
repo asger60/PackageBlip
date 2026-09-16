@@ -3,9 +3,19 @@ using UnityEngine;
 using System.IO;
 using System.Linq;
 
-public class AnysoundUtils
+public class BlipUtils
 {
-    [MenuItem("Assets/Create/Anysound from selected clips", false)]
+    [MenuItem("FloppyClub/Blip/Add Blip to active scene", false, 10)]
+    public static void CreateBlipRuntime(MenuCommand menuCommand)
+    {
+        var go = new GameObject("BlipRuntime");
+        go.AddComponent<BlipRuntime>();
+        GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
+        Undo.RegisterCreatedObjectUndo(go, "Create BlipRuntime");
+        Selection.activeObject = go;
+    }
+
+    [MenuItem("Assets/Create/Blip from selected clips", false)]
     public static void CreateAnysoundFromSelectedClips()
     {
         var selectedAudioClips = Selection.objects.OfType<AudioClip>().ToArray();
@@ -13,9 +23,9 @@ public class AnysoundUtils
 
         if (selectedAudioClips.Length > 1)
         {
-            int option = EditorUtility.DisplayDialogComplex("Create Anysound",
-                $"You have selected {selectedAudioClips.Length} audio clips. How would you like to create Anysound objects?",
-                "Individual Anysounds", "Cancel", "Single Anysound (all clips)");
+            int option = EditorUtility.DisplayDialogComplex("Create Blip from selected clips",
+                $"You have selected {selectedAudioClips.Length} audio clips. How would you like to create Blip objects?",
+                "Individual Blips", "Cancel", "Single Blip (all clips)");
 
             switch (option)
             {
@@ -42,7 +52,7 @@ public class AnysoundUtils
 
         string path = AssetDatabase.GetAssetPath(audioClips[0]);
         string directory = Path.GetDirectoryName(path);
-        string fileName = audioClips.Length == 1 ? audioClips[0].name : "New Anysound";
+        string fileName = audioClips.Length == 1 ? audioClips[0].name : "New Blip";
         string assetPath = AssetDatabase.GenerateUniqueAssetPath($"{directory}/{fileName}.asset");
 
         AssetDatabase.CreateAsset(anysound, assetPath);
@@ -77,7 +87,7 @@ public class AnysoundUtils
         }
     }
 
-    [MenuItem("Assets/Create/Anysound from selected clips", true)]
+    [MenuItem("Assets/Create/Blip from selected clips", true)]
     public static bool CreateAnysoundFromSelectedClipsValidate()
     {
         return Selection.objects.OfType<AudioClip>().Any();
