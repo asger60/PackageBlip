@@ -118,7 +118,7 @@ public class BlipRuntime : MonoBehaviour
     {
         if (!Instance)
         {
-            Debug.LogWarning("No BlipRuntime found.");
+            //Debug.LogWarning("No BlipRuntime found.");
             return;
         }
 
@@ -130,7 +130,7 @@ public class BlipRuntime : MonoBehaviour
     {
         if (!Instance)
         {
-            Debug.LogWarning("No BlipRuntime found.");
+            //Debug.LogWarning("No BlipRuntime found.");
             return;
         }
         Instance?.DoStop(sound, gameObject, onDone);
