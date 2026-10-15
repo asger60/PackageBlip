@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-[CreateAssetMenu(fileName = "Anysound", menuName = "Anysound/Anysound", order = 1)]
+[CreateAssetMenu(fileName = "Blip", menuName = "FloppyClub/Blip", order = 1)]
 public class Blip : ScriptableObject
 {
     [SerializeField] private AudioClip[] audioClips;

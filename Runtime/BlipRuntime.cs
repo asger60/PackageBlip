@@ -56,6 +56,15 @@ public class BlipRuntime : MonoBehaviour
 #endif
         }
     }
+    
+    void Awake()
+    {
+        if (_instance != null)
+        {
+            DestroyImmediate(gameObject);
+            _isInit = true;
+        }
+    }
 
     private void Start()
     {
@@ -68,6 +77,9 @@ public class BlipRuntime : MonoBehaviour
     void DoInit()
     {
         if (_isInit) return;
+        
+        if(Application.isPlaying) DontDestroyOnLoad(gameObject);
+
         foreach (var audioSource in GetComponentsInChildren<AudioSource>())
         {
             if (audioSource.gameObject == gameObject) continue;
@@ -79,6 +91,8 @@ public class BlipRuntime : MonoBehaviour
         for (int i = 0; i < voices; i++)
         {
             var sourceObject = new GameObject("AnysoundSource");
+            if(Application.isPlaying) DontDestroyOnLoad(sourceObject);
+
             var source = sourceObject.AddComponent<AudioSource>();
             sourceObject.transform.SetParent(transform);
             _trackers.Add(new BlipObjectTracker(source));
@@ -115,7 +129,7 @@ public class BlipRuntime : MonoBehaviour
 
     public static GameObject GetPreviewGameObject() => Instance?.gameObject;
 
-    public static void Play(Blip sound, GameObject gameObject)
+    public static void Play(Blip sound, GameObject gameObject = null)
     {
         if (!Instance)
         {
@@ -127,7 +141,7 @@ public class BlipRuntime : MonoBehaviour
     }
 
 
-    public static void Stop(Blip sound, GameObject gameObject, Action onDone = null)
+    public static void Stop(Blip sound, GameObject gameObject = null, Action onDone = null)
     {
         if (!Instance)
         {
@@ -172,9 +186,11 @@ public class BlipRuntime : MonoBehaviour
     }
 
 
-    void DoPlay(Blip sound, GameObject parentObject)
+    void DoPlay(Blip sound, GameObject parentObject = null)
     {
         Init();
+if(!parentObject)
+parentObject = gameObject;
         if (!parentObject)
         {
             Debug.LogWarning("#Anysound#Trying to play with no parent object.. Assigning default.");
@@ -210,7 +226,6 @@ public class BlipRuntime : MonoBehaviour
         OnPlayEvent?.Invoke(sound, parentObject);
 #endif
     }
-
     int GetPlayingInstances(Blip sound, GameObject parentObject)
     {
         return GetTrackers(sound, parentObject).Length;
@@ -219,10 +234,12 @@ public class BlipRuntime : MonoBehaviour
     {
         return GetTrackers(sound, parentObject).OrderBy(t => t.PlayTime).FirstOrDefault();
     }
-
-    void DoStop(Blip sound, GameObject parentObject, Action onDone = null)
+    
+    void DoStop(Blip sound, GameObject parentObject = null, Action onDone = null)
     {
         if (!_isInit) Init();
+if(!parentObject) 
+parentObject = gameObject;
         if (!parentObject)
         {
             Debug.LogWarning("#Anysound#Trying to stop with no parent object..");
