@@ -1,6 +1,6 @@
 {
   "name": "com.floppyclub.blip",
-  "version": "0.0.507",
+  "version": "0.0.508",
   "displayName": "Blip",
   "description": "Package for easy triggering sounds in Unity",
   "unity": "2019.1",

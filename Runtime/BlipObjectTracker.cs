@@ -12,6 +12,8 @@ public class BlipObjectTracker
     public AudioSource Source => _source;
     public GameObject Parent => _parent;
     public Blip Blip => _blip;
+    public float PlayTime => _playTime;
+    float _playTime;
 
     private bool _isFadingVolume;
 
@@ -96,6 +98,7 @@ public class BlipObjectTracker
             if (!_blip.GetStopSettings().useFade)
             {
                 DoStop();
+                return;
             }
             else
             {
@@ -155,7 +158,10 @@ public class BlipObjectTracker
         _source.maxDistance = positionSettings.MaxDistance;
         _source.panStereo = positionSettings.GetPan(parentObject);
         _startTimer = 0;
+        _stopTimer = -1;
+        _isFadingVolume = false;
         _schedulePlayDelay = sound.GetPlaySettings().delay;
+        _playTime = Time.time + _schedulePlayDelay;
         if (sound.GetPlaySettings().useFade)
             _source.volume = 0;
     }

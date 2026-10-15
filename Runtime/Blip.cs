@@ -1,6 +1,5 @@
 using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(fileName = "Anysound", menuName = "Anysound/Anysound", order = 1)]
@@ -32,6 +31,8 @@ public class Blip : ScriptableObject
 
     [SerializeField] private PlayMode playMode;
 
+    [Range(1, 10)] [SerializeField] private int numberOfPlayingInstances = 10;
+    public int NumberOfPlayingInstances => numberOfPlayingInstances;
 
     [Serializable]
     public struct SoundPositionMode
@@ -216,7 +217,7 @@ public class Blip : ScriptableObject
 
             case ClipSelectMode.All:
                 return audioClips[0];
-            
+
             default:
                 throw new ArgumentOutOfRangeException();
         }

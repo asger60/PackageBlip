@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -118,7 +119,7 @@ public class BlipRuntime : MonoBehaviour
     {
         if (!Instance)
         {
-            //Debug.LogWarning("No BlipRuntime found.");
+            Debug.LogWarning("No BlipRuntime found.");
             return;
         }
 
@@ -133,6 +134,7 @@ public class BlipRuntime : MonoBehaviour
             //Debug.LogWarning("No BlipRuntime found.");
             return;
         }
+
         Instance?.DoStop(sound, gameObject, onDone);
     }
 
@@ -160,11 +162,11 @@ public class BlipRuntime : MonoBehaviour
 
     public static bool IsPreviewing(Blip sound)
     {
-        if(!Instance)
+        if (!Instance)
         {
-            
             return false;
         }
+
         if (!Instance._isInit) Init();
         return Instance.GetTrackers(sound, Instance.gameObject).Length > 0;
     }
@@ -187,6 +189,11 @@ public class BlipRuntime : MonoBehaviour
 
         if (!_isInit) Init();
 
+        if (GetPlayingInstances(sound, parentObject) >= sound.NumberOfPlayingInstances)
+        {
+            GetOldestTracker(sound, parentObject).Stop();
+        }
+
         if (sound.GetClipSelectMode() == Blip.ClipSelectMode.All)
         {
             foreach (var clip in sound.AudioClips)
@@ -202,6 +209,15 @@ public class BlipRuntime : MonoBehaviour
 #if UNITY_EDITOR
         OnPlayEvent?.Invoke(sound, parentObject);
 #endif
+    }
+
+    int GetPlayingInstances(Blip sound, GameObject parentObject)
+    {
+        return GetTrackers(sound, parentObject).Length;
+    }
+    BlipObjectTracker GetOldestTracker(Blip sound, GameObject parentObject)
+    {
+        return GetTrackers(sound, parentObject).OrderBy(t => t.PlayTime).FirstOrDefault();
     }
 
     void DoStop(Blip sound, GameObject parentObject, Action onDone = null)
