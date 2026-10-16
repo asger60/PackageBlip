@@ -45,7 +45,6 @@ public class BlipObjectInspector : Editor
         _extendedInspector = new VisualElement();
         InspectorElement.FillDefaultInspector(_extendedInspector, serializedObject, this);
         _extendedInspector.style.display = new StyleEnum<DisplayStyle>(foldOut.value ? DisplayStyle.Flex : DisplayStyle.None);
-        //_summaryLabel.style.display = new StyleEnum<DisplayStyle>(foldOut.value ? DisplayStyle.None : DisplayStyle.Flex);
 
         root.Add(_extendedInspector);
 
@@ -53,7 +52,6 @@ public class BlipObjectInspector : Editor
         {
             BlipRuntime.ShowExtendedSettings = foldOut.value;
             _extendedInspector.style.display = new StyleEnum<DisplayStyle>(foldOut.value ? DisplayStyle.Flex : DisplayStyle.None);
-           // _summaryLabel.style.display = new StyleEnum<DisplayStyle>(foldOut.value ? DisplayStyle.None : DisplayStyle.Flex);
         });
 
         root.TrackSerializedObjectValue(serializedObject, property => { RefreshSummary(); });
@@ -71,9 +69,11 @@ public class BlipObjectInspector : Editor
         _parameterSlider = new Slider("Test parameter", 0, 1f)
         {
             showInputField = true,
+            value = _blip.ParameterValue
         };
         RefreshParameterActive();
-        _parameterSlider.RegisterValueChangedCallback(evt => { BlipRuntime.SetPreviewParameter(evt.newValue); });
+        // Goes through the Blip so it remembers the parameter, which the volume/pitch drawers display
+        _parameterSlider.RegisterValueChangedCallback(evt => { _blip.SetParameter(BlipRuntime.GetPreviewGameObject(), evt.newValue); });
 
 
         root.TrackSerializedObjectValue(serializedObject, property => { RefreshParameterActive(); });
@@ -101,11 +101,15 @@ public class BlipObjectInspector : Editor
                 BlipRuntime.Play(_blip, BlipRuntime.GetPreviewGameObject());
                 SetPreviewState("Preview");
             }
-        });
-
-        _previewButton.style.width = new StyleLength(new Length(100, LengthUnit.Percent));
-        _previewButton.style.justifyContent = Justify.Center;
-        _previewButton.style.alignItems = Align.Center;
+        })
+        {
+            style =
+            {
+                width = new StyleLength(new Length(100, LengthUnit.Percent)),
+                justifyContent = Justify.Center,
+                alignItems = Align.Center
+            }
+        };
 
         _previewIcon = new Image
         {

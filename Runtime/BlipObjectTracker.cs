@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class BlipObjectTracker
 {
@@ -14,6 +15,10 @@ public class BlipObjectTracker
     public Blip Blip => _blip;
     public float PlayTime => _playTime;
     float _playTime;
+
+    private static int _nextPlayId;
+    // Identifies a single playback, since trackers are reused for other sounds
+    public int PlayId { get; private set; }
 
     private bool _isFadingVolume;
 
@@ -41,6 +46,8 @@ public class BlipObjectTracker
     }
 
     private Fade _fade;
+    // Multiplied onto the volume, so fades follow the same volume curve and live parameter changes
+    private float _fadeGain = 1;
     private float _parameter = 1;
 
     public BlipObjectTracker(AudioSource source)
@@ -79,10 +86,9 @@ public class BlipObjectTracker
         {
             _startTimer = -1;
             _source.Play();
-            if (_blip.GetPlaySettings().useFade)
+            if (_blip.GetPlaySettings().UseFade)
             {
-                _source.volume = _fade.initialValue;
-                _fade = new Fade(0, _blip.GetVolume(_parameter), _blip.GetPlaySettings().fadeDuration);
+                _fade = new Fade(0, 1, _blip.GetPlaySettings().fadeDuration);
                 _isFadingVolume = true;
             }
         }
@@ -95,16 +101,14 @@ public class BlipObjectTracker
         if (_stopTimer > _scheduleStopDelay)
         {
             _stopTimer = -1;
-            if (!_blip.GetStopSettings().useFade)
+            if (!_blip.GetStopSettings().UseFade)
             {
                 DoStop();
                 return;
             }
-            else
-            {
-                _fade = new Fade(_source.volume, 0, _blip.GetStopSettings().fadeDuration);
-                _isFadingVolume = true;
-            }
+
+            _fade = new Fade(_fadeGain, 0, _blip.GetStopSettings().fadeDuration);
+            _isFadingVolume = true;
         }
 
 
@@ -113,15 +117,10 @@ public class BlipObjectTracker
             _source.panStereo = BlipRuntime.GetSound2DPan(_parent);
         }
 
-        if (_blip.ExternalPitchControl || _blip.ExternalVolumeControl)
-        {
-            HandleVolumeAndPitch();
-        }
-
         if (_isFadingVolume)
         {
             _fade.timer += BlipRuntime.DeltaTime;
-            _source.volume = Mathf.Lerp(_fade.initialValue, _fade.targetValue, _fade.timer / _fade.duration);
+            _fadeGain = Mathf.Lerp(_fade.initialValue, _fade.targetValue, _fade.timer / _fade.duration);
 
             if (_fade.timer > _fade.duration)
             {
@@ -134,6 +133,8 @@ public class BlipObjectTracker
             }
         }
 
+        HandleVolumeAndPitch();
+
         if (_source.spatialBlend > 0)
         {
             _source.transform.position = _parent.transform.position;
@@ -145,11 +146,12 @@ public class BlipObjectTracker
         _blip = sound;
         _parent = parentObject;
         _isFree = false;
+        PlayId = ++_nextPlayId;
         _source.clip = specificCLip ?? sound.GetAudioClip();
-        float volume = sound.GetVolume(_parameter);
 
-        _source.volume = volume;
-        _source.pitch = sound.GetPitch(_parameter);
+        _fadeGain = sound.GetPlaySettings().UseFade ? 0 : 1;
+        _source.volume = Mathf.Pow(sound.GetVolumeValue(), 2) * _fadeGain;
+        _source.pitch = sound.GetPitchValue();
         _source.loop = sound.GetLooping();
         var positionSettings = sound.GetSoundPositionSettings();
         _source.spatialBlend = positionSettings.Spatialize ? 1 : 0;
@@ -162,8 +164,6 @@ public class BlipObjectTracker
         _isFadingVolume = false;
         _schedulePlayDelay = sound.GetPlaySettings().delay;
         _playTime = Time.time + _schedulePlayDelay;
-        if (sound.GetPlaySettings().useFade)
-            _source.volume = 0;
     }
 
     public float GetPlaybackPercent()
@@ -202,10 +202,7 @@ public class BlipObjectTracker
 
     void HandleVolumeAndPitch()
     {
-        if (_blip.ExternalPitchControl)
-            _source.pitch = Mathf.Max(_blip.GetPitch(_parameter), 0.1f);
-
-        if (_blip.ExternalVolumeControl)
-            _source.volume = Mathf.Pow(_blip.GetVolume(_parameter), 2);
+        _source.pitch = Mathf.Max(_blip.GetPitchValue(), 0.1f);
+        _source.volume = Mathf.Pow(_blip.GetVolumeValue(), 2) * _fadeGain;
     }
 }

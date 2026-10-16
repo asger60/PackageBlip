@@ -117,6 +117,11 @@ public class BlipRuntime : MonoBehaviour
     public static Action<Blip, GameObject> OnPlayEvent;
     public static Action<Blip, GameObject> OnStopEvent;
 
+    public static BlipObjectTracker GetNewestTracker(Blip sound, GameObject parentObject)
+    {
+        return Instance?.GetTrackers(sound, parentObject).OrderByDescending(t => t.PlayId).FirstOrDefault();
+    }
+
     static void EditorUpdate()
     {
         if (Application.isPlaying) return;
@@ -155,14 +160,6 @@ public class BlipRuntime : MonoBehaviour
 
     public static void SetParameter(Blip sound, GameObject parentObject, float value) => Instance?.DoSetParameter(sound, parentObject, value);
 
-
-    public static void SetPreviewParameter(float value)
-    {
-        foreach (var tracker in Instance.GetTrackers(Instance.gameObject))
-        {
-            tracker.SetParameter(value);
-        }
-    }
 
     void DoSetParameter(Blip sound, GameObject parentObject, float value)
     {
@@ -214,11 +211,13 @@ public class BlipRuntime : MonoBehaviour
         {
             foreach (var clip in sound.AudioClips)
             {
+                sound.RegisterPlay();
                 GetFreeTracker()?.Play(sound, parentObject, clip);
             }
         }
         else
         {
+            sound.RegisterPlay();
             GetFreeTracker()?.Play(sound, parentObject);
         }
 

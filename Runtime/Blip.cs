@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [CreateAssetMenu(fileName = "Blip", menuName = "FloppyClub/Blip", order = 1)]
@@ -50,9 +51,9 @@ public class Blip : ScriptableObject
 
         public SoundPositionMode(SoundPositionType soundPositionMode, float maxDistance)
         {
-            this.soundPositionType = soundPositionMode;
+            soundPositionType = soundPositionMode;
             this.maxDistance = maxDistance;
-            this.minDistance = 10;
+            minDistance = 10;
         }
     }
 
@@ -65,68 +66,91 @@ public class Blip : ScriptableObject
     {
         [Range(0, 1f)] public float value;
         [SerializeField] private ControlSource control;
+        
+        private float _currentValue;
 
         public float GetValue(float externalValue)
         {
-            if (controlActive)
-                return control.GetControlValue(value, externalValue);
+            if (control.ExternalControl == ControlSource.ExternalControlTypes.FollowGameParameter)
+                return control.GetControlValue(externalValue);
+            if (control.ExternalControl == ControlSource.ExternalControlTypes.RandomEachPlay)
+                return _currentValue;
+
             return value;
         }
 
-        public bool IsExternallyControlled => control.SourceType == ControlSource.ControlSourceTypes.GameParameter;
-        public bool controlActive;
+
+        public bool IsExternallyControlled => control.ExternalControl == ControlSource.ExternalControlTypes.FollowGameParameter;
+
+        public ControlSource.ExternalControlTypes ExternalControl => control.ExternalControl;
+
+        // True once a random value has been rolled by a play
+        public bool HasCurrentValue { get; private set; }
+
+        // The value currently in effect, used by the editor to show what the external control produces
+        public float GetDisplayValue(float externalValue)
+        {
+            switch (control.ExternalControl)
+            {
+                case ControlSource.ExternalControlTypes.RandomEachPlay:
+                    return _currentValue;
+                case ControlSource.ExternalControlTypes.FollowGameParameter:
+                    return control.GetControlValue(externalValue);
+                default:
+                    return value;
+            }
+        }
 
         public void Init(float initialValue)
         {
             value = initialValue;
             control.Init();
-            controlActive = false;
+        }
+
+        public void OnPlay(float externalValue)
+        {
+            _currentValue = control.GetControlValue(externalValue);
+            HasCurrentValue = true;
         }
     }
 
     [Serializable]
     public struct ControlSource
     {
-        public enum ControlSourceTypes
+        public enum ExternalControlTypes
         {
-            Random,
-            GameParameter
+            None,
+            RandomEachPlay,
+            FollowGameParameter
         }
 
-        [SerializeField] private ControlSourceTypes sourceType;
-
-        [SerializeField] private float randomControlWidth;
-
-        [Range(-1, 1)] [SerializeField] private float randomShift;
-
+        [FormerlySerializedAs("type")] [FormerlySerializedAs("sourceType")] [SerializeField] private ExternalControlTypes externalControl;
         [SerializeField] private float valueMin;
-
         [SerializeField] private float valueMax;
 
 
-        public float GetControlValue(float initialValue, float externalValue)
+        public float GetControlValue(float inputValue)
         {
-            switch (sourceType)
+            switch (externalControl)
             {
-                case ControlSourceTypes.Random:
-                    float width = randomControlWidth * 0.5f;
-                    float rangeMin = (width * -1 + (width * randomShift));
-                    float rangeMax = width + (width * randomShift);
-                    return initialValue + Random.Range(rangeMin, rangeMax);
-                case ControlSourceTypes.GameParameter:
-                    return initialValue + Mathf.Lerp(valueMin, valueMax, externalValue);
+                case ExternalControlTypes.None:
+                    return inputValue;
+                case ExternalControlTypes.RandomEachPlay:
+                    float rangeMin = valueMin;
+                    float rangeMax = valueMax;
+                    return Random.Range(rangeMin, rangeMax);
+                case ExternalControlTypes.FollowGameParameter:
+                    return Mathf.Lerp(valueMin, valueMax, inputValue);
                 default:
                     throw new ArgumentOutOfRangeException();
             }
         }
 
-        public ControlSourceTypes SourceType => sourceType;
+        public ExternalControlTypes ExternalControl => externalControl;
 
         public void Init()
         {
-            sourceType = ControlSourceTypes.Random;
-            randomControlWidth = 0.25f;
-            randomShift = 0;
+            externalControl = ExternalControlTypes.RandomEachPlay;
             valueMin = 0;
             valueMax = 1;
         }
@@ -148,8 +172,8 @@ public class Blip : ScriptableObject
     public struct ActivationSettings
     {
         [Range(0, 5f)] public float delay;
-        public bool useFade;
         [Range(0, 5f)] public float fadeDuration;
+        public bool UseFade => fadeDuration > 0;
     }
 
     public struct SoundPositionSettings
@@ -184,22 +208,24 @@ public class Blip : ScriptableObject
         }
     }
 
-    public bool ExternalPitchControl => pitch.controlActive && pitch.IsExternallyControlled;
-    public bool ExternalVolumeControl => volume.controlActive && volume.IsExternallyControlled;
+    public bool ExternalPitchControl => pitch.IsExternallyControlled;
+    public bool ExternalVolumeControl => volume.IsExternallyControlled;
 
     public bool Is2D => soundPositionMode.soundPositionType == SoundPositionMode.SoundPositionType.ScreenSpace;
 
     public SoundPositionMode.SoundPositionType PositionType => soundPositionMode.soundPositionType;
 
-    public float GetPitch(float externalValue)
+    public float GetPitchValue()
     {
-        return pitch.GetValue(externalValue);
+        return pitch.GetValue(_externalParameterValue);
     }
 
-    public float GetVolume(float externalValue)
+    public ControlledValue GetVolumeControl() => volume;
+
+
+    public float GetVolumeValue()
     {
-        var val = volume.GetValue(externalValue);
-        return val;
+        return volume.GetValue(_externalParameterValue);
     }
 
     public AudioClip GetAudioClip()
@@ -249,10 +275,24 @@ public class Blip : ScriptableObject
         stopSettings.fadeDuration = 0.2f;
     }
 
-    public static void Play(Blip sound, GameObject parentObject) => BlipRuntime.Play(sound, parentObject);
-    public static void Stop(Blip sound, GameObject parentObject) => BlipRuntime.Stop(sound, parentObject);
+    private float _externalParameterValue;
+    public float ParameterValue => _externalParameterValue;
+
+    public void RegisterPlay()
+    {
+        volume.OnPlay(_externalParameterValue);
+        pitch.OnPlay(_externalParameterValue);
+    }
+
+    public static void Play(Blip sound, GameObject parentObject = null) => BlipRuntime.Play(sound, parentObject);
+    public static void Stop(Blip sound, GameObject parentObject = null) => BlipRuntime.Stop(sound, parentObject);
 
     public void Play(GameObject parentObject = null) => BlipRuntime.Play(this, parentObject);
     public void Stop(GameObject parentObject = null) => BlipRuntime.Stop(this, parentObject);
-    public void SetParameter(GameObject parentObject, float value) => BlipRuntime.SetParameter(this, parentObject, value);
+
+    public void SetParameter(GameObject parentObject, float value)
+    {
+        _externalParameterValue = value;
+        BlipRuntime.SetParameter(this, parentObject, value);
+    }
 }
